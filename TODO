@@ -1,0 +1,9 @@
+# Add issues
+
+- Create URL with Pelican method
+
+# Issue
+
+- Documentation in code
+- Factorize code (libFunction.py)
+- Best handling of error cases
