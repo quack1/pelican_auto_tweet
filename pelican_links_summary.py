@@ -99,6 +99,7 @@ for tweet in tweets:
 		if final_text.startswith("#"):
 			final_text = "&#35;" + final_text[1:]
 		CONTENT += u"\n\n%s"%final_text
+		print raw_text
 
 # Generate the page header
 header = PAGE_HEADER%(datetime.datetime.now().strftime('%Y-%m-%d %H:%M'))
