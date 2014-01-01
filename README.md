@@ -226,7 +226,7 @@ The usage of this script is quite the same as the previous one
 
 I wrote some posts on my blog about this script : 
 
-- [Presentation](http://blog.quack1.me/pelican_auto_tweet.html) ;
+- [Presentation](http://blog.quack1.me/pelican_auto_tweet-en.html) ;
 - [How to automate the publication with Git hooks](http://blog.quack1.me/git_hooks_pelican-en.html).
 
 I also created the theme I use on my blog, which is available [on Github](https://github.com/quack1/notebook).
