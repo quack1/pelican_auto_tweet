@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*- #
 
 # Script Config
-BASE_DIR         = ''
+BASE_DIR         = '<Pelican_Blog_Home_Directory>'
 SUMMARY_DAYS     = 10
 SUMMARY_INTERVAL = 180
 
@@ -14,6 +14,13 @@ TWEET_SUMMARY_END_ONE  = '#blogReplay C\'était le seul article publié cette se
 TWEET_SUMMARY_END_MANY = '#blogReplay C\'était les %d articles publiés cette semaine. Fin du spam! :)'
 IS_TWEET_SUMMARY_BEGIN = True
 IS_TWEET_SUMMARY_END   = False
+
+# Twitter Links
+TWITTER_USERNAME = ""
+PAGE_HEADER      = """Title: Liens partagés sur Twitter
+Date: %s
+Author: """
+LINKS_OUT_FILE = BASE_DIR + "/content/pages/links.md"
 
 # Twitter API
 CONSUMER_KEY = ''
