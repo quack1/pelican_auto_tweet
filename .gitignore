@@ -2,3 +2,4 @@
 *.swp
 *.orig
 conf.py
+*.id
