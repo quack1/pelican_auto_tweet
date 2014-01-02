@@ -22,6 +22,7 @@ import datetime
 import os
 import os.path
 import re
+import sys
 
 # From http://code.google.com/p/python-twitter/
 import twitter
@@ -71,6 +72,7 @@ date_end_timestamp = (date_end - datetime.date(1970, 1, 1)).total_seconds()
 
 # Generate content with the links
 CONTENT = u""
+urls = []
 
 for tweet in tweets:
 	timestamp = tweet.GetCreatedAtInSeconds()
@@ -79,7 +81,6 @@ for tweet in tweets:
 	if timestamp >= date_start_timestamp and timestamp < date_end_timestamp and not raw_text.startswith("@") and not raw_text.startswith("RT") and not "#blog" in raw_text and not "#blogReplay" in raw_text:		
 		
 		final_text = u""
-		urls       = []
 
 		res = re.search(RE_URL, raw_text)
 		if not res:
@@ -99,7 +100,7 @@ for tweet in tweets:
 		if final_text.startswith("#"):
 			final_text = "&#35;" + final_text[1:]
 		CONTENT += u"\n\n%s"%final_text
-		print raw_text
+		print raw_text.encode("utf-8")
 
 # Generate the page header
 header = PAGE_HEADER%(datetime.datetime.now().strftime('%Y-%m-%d %H:%M'))
@@ -124,3 +125,8 @@ if len(tweets):
 	LAST_ID = tweets[0].GetId()
 	with open(LAST_ID_FILE, "w") as f:
 		f.write(str(LAST_ID))
+
+if len(urls) > 0:
+	sys.exit(0)
+else:
+	sys.exit(1)
