@@ -1,16 +1,12 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''This script is used to automaticaly tweet link of the last published post from
-a Pelican blog.
-Both Markdown and Rest syntax are supported. The 'Slug' tag **have** to be set
-	so the script can create the complete URI to the post.
-'''
+'''This script is used to create a page on a Pelican blog with the last links shared on Twitter.'''
 
 __author__     = 'quack1'
-__version__    = '0.4'
-__date__       = '2013-11-11'
-__copyright__  = 'Copyright © 2013, Quack1'
+__version__    = '0.1'
+__date__       = '2014-01-01'
+__copyright__  = 'Copyright © 2014, Quack1'
 __licence__    = 'BSD'
 __credits__    = ['Quack1']
 __maintainer__ = 'Quack1'
@@ -66,7 +62,6 @@ date_start = datetime.date.today() - datetime.timedelta(1)
 date_end   = datetime.date.today()
 
 date_start_timestamp = (date_start - datetime.date(1970, 1, 1)).total_seconds()
-#date_start_timestamp = 0
 date_end_timestamp = (date_end - datetime.date(1970, 1, 1)).total_seconds()
 
 

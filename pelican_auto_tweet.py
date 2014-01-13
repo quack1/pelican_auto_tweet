@@ -23,6 +23,7 @@ import sys
 import commands
 import unicodedata
 import os
+from HTMLParser import HTMLParser
 
 # From https://github.com/bitly/bitly-api-python
 import bitly_api as bitlyapi
@@ -38,6 +39,22 @@ REGEX_TITLE = re.compile(r'Title:\s+(.*)',re.IGNORECASE)
 REGEX_SLUG = re.compile(r'Slug:\s+(.*)',re.IGNORECASE)
 TWITTER_API = None
 BITLY_API = None
+
+#
+# From http://stackoverflow.com/questions/753052/strip-html-from-strings-in-python
+#
+class MLStripper(HTMLParser):
+    def __init__(self):
+        self.reset()
+        self.fed = []
+    def handle_data(self, d):
+        self.fed.append(d)
+    def get_data(self):
+        return ''.join(self.fed)
+def strip_tags(html):
+    s = MLStripper()
+    s.feed(html)
+    return s.get_data()
 
 def twitter_connect():
 	'''Connect the API to Twitter with the OAuth protocol.'''
@@ -126,6 +143,8 @@ files = result.splitlines()[1:]
 if not TWEET_FORMAT_AUTO:
 	TWEET_FORMAT_AUTO = '$$POST_TITLE$$ $$POST_URL$$ #blog'
 
+
+
 if log_message.startswith('[POST]'):
 	os.system('git push')
 	os.system('make ssh_upload')
@@ -143,6 +162,7 @@ if log_message.startswith('[POST]'):
 			# Generate tweet message from TWEET_FORMAT_AUTO
 			tweet_text = TWEET_FORMAT_AUTO.replace('$$POST_TITLE$$', title)
 			tweet_text = tweet_text.replace('$$POST_URL$$', url)
+			tweet_text = strip_tags(tweet_text)
 
 			# Post tweet
 			twitter_send(tweet_text)

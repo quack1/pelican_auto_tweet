@@ -22,6 +22,7 @@ import os
 import re
 import sys
 import time
+from HTMLParser import HTMLParser
 
 # From http://code.google.com/p/python-twitter/
 import twitter
@@ -45,6 +46,23 @@ DATES          = []
 TITLES         = []
 BITLY_API      = None
 LOG_FILE       = '/var/log/pelican_auto_tweet/summary.log'
+
+#
+# From http://stackoverflow.com/questions/753052/strip-html-from-strings-in-python
+#
+class MLStripper(HTMLParser):
+    def __init__(self):
+        self.reset()
+        self.fed = []
+    def handle_data(self, d):
+        self.fed.append(d)
+    def get_data(self):
+        return ''.join(self.fed)
+def strip_tags(html):
+    s = MLStripper()
+    s.feed(html)
+    return s.get_data()
+
 
 def twitter_connect():
 	'''Connect the API to Twitter with the OAuth protocol.'''
@@ -234,6 +252,7 @@ with open(LOG_FILE, 'a') as log_file:
 			# Generate tweet message from TWEET_FORMAT
 			tweet_text = TWEET_FORMAT_SUMMARY.replace('$$POST_TITLE$$', title)
 			tweet_text = tweet_text.replace('$$POST_URL$$', url)
+			tweet_text = strip_tags(tweet_text)
 
 			# Post tweet
 			twitter_send(tweet_text)
