@@ -146,6 +146,7 @@ if not TWEET_FORMAT_AUTO:
 
 
 if log_message.startswith('[POST]'):
+	os.system('git pull --commit --no-edit')
 	os.system('git push')
 	os.system('make ssh_upload')
 	for filename in files:
