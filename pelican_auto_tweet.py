@@ -37,6 +37,7 @@ SITE_BASE_URL = ''
 REGEX_BASE_URL = re.compile(r'SITEURL = \'(.*)\'',re.IGNORECASE)
 REGEX_TITLE = re.compile(r'Title:\s+(.*)',re.IGNORECASE)
 REGEX_SLUG = re.compile(r'Slug:\s+(.*)',re.IGNORECASE)
+REGEX_STATUS = re.compile(r'Status:\s*(.*)', re.IGNORECASE)
 TWITTER_API = None
 BITLY_API = None
 
@@ -105,6 +106,20 @@ def get_post_infos(filename):
 		url = ''
 	return title,url
 
+def articles_contains_draft(articles):
+	'''Get the status of an article. 
+	Returns True if the article is a draft. Else, returns False.
+	The file must be located in BASE_DIR.'''
+	contains_draft = False
+	for filename in articles:
+		with open(os.path.join(BASE_DIR,filename), 'r') as f:
+			for l in f:
+				res = REGEX_STATUS.search(l)
+				if res:
+					if res.group(1).strip().upper() == "DRAFT":
+						contains_draft = True
+	return contains_draft
+
 
 # Check arguments
 if len(sys.argv) >= 2:
@@ -146,6 +161,20 @@ if not TWEET_FORMAT_AUTO:
 
 
 if log_message.startswith('[POST]'):
+
+	# Check that we are not publishing a draft
+	if articles_contains_draft(files):
+		print "You are about to publish drafts."
+		response = raw_input("Do you want to publish them (y-n) ? [n]")
+		if not response:
+			response = "N"
+		while response.upper() not in ("N", "Y"):
+			response = raw_input("Do you want to publish them (y-n) ? [n]")
+			if not response:
+				response = "N"
+		if response.upper() == "N":
+			sys.exit(2)
+
 	os.system('git pull --commit --no-edit')
 	os.system('git push')
 	os.system('make ssh_upload')
