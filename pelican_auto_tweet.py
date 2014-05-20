@@ -31,15 +31,11 @@ import bitly_api as bitlyapi
 import twitter
 
 from conf import *
+import libpelican
 
-BASE_DIR = ''
-SITE_BASE_URL = ''
-REGEX_BASE_URL = re.compile(r'SITEURL = \'(.*)\'',re.IGNORECASE)
-REGEX_TITLE = re.compile(r'Title:\s+(.*)',re.IGNORECASE)
-REGEX_SLUG = re.compile(r'Slug:\s+(.*)',re.IGNORECASE)
-REGEX_STATUS = re.compile(r'Status:\s*(.*)', re.IGNORECASE)
 TWITTER_API = None
-BITLY_API = None
+BITLY_API   = None
+BLOG        = None
 
 #
 # From http://stackoverflow.com/questions/753052/strip-html-from-strings-in-python
@@ -72,65 +68,15 @@ def twitter_send(text):
 	TWITTER_API.PostUpdate(text)
 	print(text)
 
-def get_site_base_url():
-	'''Get the site base url from the pelicanconf.py file.
-	The file must be located at ../pelicanconf.py related to the base 
-	directory given in the parameter of the script'''
-	global SITE_BASE_URL
-	f = open(os.path.join(BASE_DIR,"pelicanconf.py"))
-	if f:
-		for l in f:
-			res = REGEX_BASE_URL.search(l)
-			if res:
-				SITE_BASE_URL = res.group(1)
-				if not SITE_BASE_URL.endswith('/'):
-					SITE_BASE_URL += '/'
-				break
-		f.close()
-
-def get_post_infos(filename):
-	'''Get the base informations necessary to build the text send 
-	to Twitter from the post source file. The 2 read tags are 'title'
-	and 'slug'.'''
-	title,url = '',''
-	with open(os.path.join(BASE_DIR, filename),"r") as f:
-		for line in f:
-				res = REGEX_TITLE.search(line)
-				if res:
-					title = res.group(1)
-				else:
-					res = REGEX_SLUG.search(line)
-					if res:
-						url = res.group(1)
-	if not url:
-		url = ''
-	return title,url
-
-def articles_contains_draft(articles):
-	'''Get the status of an article. 
-	Returns True if the article is a draft. Else, returns False.
-	The file must be located in BASE_DIR.'''
-	contains_draft = False
-	for filename in articles:
-		with open(os.path.join(BASE_DIR,filename), 'r') as f:
-			for l in f:
-				res = REGEX_STATUS.search(l)
-				if res:
-					if res.group(1).strip().upper() == "DRAFT":
-						contains_draft = True
-	return contains_draft
-
 
 # Check arguments
 if len(sys.argv) >= 2:
-	BASE_DIR = sys.argv[1]
-elif not BASE_DIR:
-	BASE_DIR = './'
-
-
-if not BASE_DIR:
-	print 'Error... No content dir'
-	sys.exit(2)
+	base_dir = sys.argv[1]
+# elif BASE_DIR:	# BASE_DIR comes from conf.py
+# 	base_dir = BASE_DIR
+else:
+	base_dir = './'
+BLOG = libpelican.PelicanBlog(base_dir)
 
 # Trying to connect to BitlyAPI
 try:
@@ -145,11 +91,9 @@ try:
 except:
 	BITLY_API = None
 
-get_site_base_url()
-if not SITE_BASE_URL.endswith('/') : 
-	SITE_BASE_URL = SITE_BASE_URL + '/'
+BLOG.get_site_base_url()
 
-os.chdir(BASE_DIR)
+os.chdir(BLOG.get_base_directory())
 result = commands.getoutput('git show --pretty="format:%s" --name-only')
 
 log_message = result.splitlines()[0]
@@ -158,12 +102,10 @@ files = result.splitlines()[1:]
 if not TWEET_FORMAT_AUTO:
 	TWEET_FORMAT_AUTO = '$$POST_TITLE$$ $$POST_URL$$ #blog'
 
-
-
 if log_message.startswith('[POST]'):
 
 	# Check that we are not publishing a draft
-	if articles_contains_draft(files):
+	if BLOG.posts_have_drafts(files):
 		print "You are about to publish drafts."
 		response = raw_input("Do you want to publish them (y-n) ? [n]")
 		if not response:
@@ -178,11 +120,15 @@ if log_message.startswith('[POST]'):
 	os.system('git pull --commit --no-edit')
 	os.system('git push')
 	os.system('make ssh_upload')
+
+
 	for filename in files:
-		base, ext = os.path.splitext(filename)
+		post_filename = os.path.basename(filename)
+		base, ext     = os.path.splitext(filename)
+
 		if base.startswith('content/') and ext in ('.rst','.md'):
-			title,slug = get_post_infos(os.path.join(BASE_DIR, filename))
-			url = SITE_BASE_URL + slug + ".html"
+			title = BLOG.get_post_title(filename)
+			url   = BLOG.get_post_url(filename)
 
 			if BITLY_API:
 				s = BITLY_API.shorten(url)

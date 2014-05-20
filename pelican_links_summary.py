@@ -24,7 +24,7 @@ import sys
 import twitter
 
 from conf import *
-
+import libpelican
 
 
 TWITTER_API  = None

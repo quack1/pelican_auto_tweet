@@ -33,12 +33,8 @@ import unicodedata
 from conf import *
 
 
-REGEX_DATE     = re.compile(r'date: (\d{4})-(\d{2})-(\d{2}) \d{2}:\d{2}',re.IGNORECASE)
-REGEX_BASE_URL = re.compile(r'SITEURL = \'(.*)\'',re.IGNORECASE)
-REGEX_TITLE    = re.compile(r'Title:\s+(.*)',re.IGNORECASE)
-REGEX_SLUG     = re.compile(r'Slug:\s+(.*)',re.IGNORECASE)
+
 TODAY          = datetime.date.today()
-SITE_BASE_URL  = ''
 TWITTER_API    = None
 FIRST_TWEETED  = False
 SLUGS          = []
@@ -78,40 +74,6 @@ def twitter_send(text):
 		twitter_connect()
 	TWITTER_API.PostUpdate(text)
 
-def get_site_base_url():
-	'''Get the site base url from the pelicanconf.py file.
-	The file must be located at ../pelicanconf.py related to the base 
-	directory given in the parameter of the script'''
-	global SITE_BASE_URL
-	f = open(os.path.join(BASE_DIR,"pelicanconf.py"))
-	if f:
-		for l in f:
-			res = REGEX_BASE_URL.search(l)
-			if res:
-				SITE_BASE_URL = res.group(1)
-				if not SITE_BASE_URL.endswith('/'):
-					SITE_BASE_URL += '/'
-				break
-		f.close()
-
-def get_post_infos(filename):
-	'''Get the base informations necessary to build the text send 
-	to Twitter from the post source file. The 2 read tags are 'title'
-	and 'slug'.'''
-	title,url = '',''
-	with open(filename,"r") as f:
-		for line in f:
-				res = REGEX_TITLE.search(line)
-				if res:
-					title = res.group(1)
-				else:
-					res = REGEX_SLUG.search(line)
-					if res:
-						url = res.group(1)
-	if not url:
-		url = ''
-	return title,url
-
 def first_tweet(msg):
 	global FIRST_TWEETED
 	if not FIRST_TWEETED:
@@ -120,13 +82,13 @@ def first_tweet(msg):
 
 # Check arguments
 if len(sys.argv) >= 2:
-	BASE_DIR = sys.argv[1]
-elif not BASE_DIR:
-	BASE_DIR = './'
+	base_dir = sys.argv[1]
+elif BASE_DIR:	# BASE_DIR comes from conf.py
+	base_dir = BASE_DIR
+else:
+	base_dir = './'
 
-if not BASE_DIR:
-	print 'Error... No content dir'
-	sys.exit(2)
+BLOG = libpelican.PelicanBlog(base_dir)
 
 # Get number of days for which posts should be considered as new
 try:
@@ -145,7 +107,7 @@ except:
 	SUMMARY_INTERVAL = 180
 
 
-get_site_base_url()
+BLOG.get_site_base_url()
 
 # Trying to connect to BitlyAPI
 try:
@@ -160,27 +122,15 @@ try:
 except:
 	BITLY_API = None
 
-CONTENT_DIR = os.path.join(BASE_DIR,'content/')
-for filename in os.listdir(CONTENT_DIR):
-	base, ext = os.path.splitext(filename)
-	if ext in ('.rst','.md'):
-		with open(os.path.join(CONTENT_DIR, filename),"r") as f:
-			for line in f:
-				res = REGEX_DATE.search(line)
-				if res:
-					year,month,day = int(res.group(1)),int(res.group(2)),int(res.group(3))
-					post_date = datetime.date(year,month,day)
-					if post_date+datetime.timedelta(SUMMARY_DAYS) >= TODAY:
-						title,slug = get_post_infos(os.path.join(CONTENT_DIR, filename))
-						if not slug in SLUGS:
-							SLUGS.append(slug)
-							DATES.append(post_date)
-							TITLES.append(title)
-
-if SITE_BASE_URL.endswith('/') : 
-	SITE_BASE_URL = SITE_BASE_URL 
-else:
-	SITE_BASE_URL = SITE_BASE_URL + '/'
+for post_filename in BLOG.get_posts:
+	post_date = BLOG.get_post_date(post_filename).date()
+	if post_date+datetime.timedelta(SUMMARY_DAYS) >= TODAY:
+		title = BLOG.get_post_title(post_filename)
+		url   = BLOG.get_post_url(post_filename)
+		if not url in SLUGS:
+			SLUGS.append(url)
+			DATES.append(post_date)
+			TITLES.append(title)	
 
 #---------------------------------------------------
 # TWEET_FORMAT for tweets
@@ -225,7 +175,7 @@ with open(LOG_FILE, 'a') as log_file:
 	if len(SLUGS):
 		POSTS = []
 		for i in xrange(len(SLUGS)):
-			article = {'slug':SLUGS[i],'date':DATES[i],'title':TITLES[i]}
+			article = {'url':SLUGS[i],'date':DATES[i],'title':TITLES[i]}
 			POSTS.append(article)
 		POSTS.sort(key=lambda item:item['date'])
 		
@@ -234,7 +184,8 @@ with open(LOG_FILE, 'a') as log_file:
 
 		for a in POSTS:
 			time.sleep(SUMMARY_INTERVAL)
-			url = SITE_BASE_URL + a['slug'] + ".html"
+
+			url = a['url']
 
 			if BITLY_API:
 				s = BITLY_API.shorten(url)
