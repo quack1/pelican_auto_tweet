@@ -8,9 +8,9 @@ Both Markdown and Rest syntax are supported. The 'Slug' tag **have** to be set
 '''
 
 __author__     = 'quack1'
-__version__    = '0.4'
-__date__       = '2013-11-11'
-__copyright__  = 'Copyright © 2013, Quack1'
+__version__    = '0.5'
+__date__       = '2014-05-21'
+__copyright__  = 'Copyright © 2013-2014, Quack1'
 __licence__    = 'BSD'
 __credits__    = ['Quack1']
 __maintainer__ = 'Quack1'
@@ -127,8 +127,8 @@ if log_message.startswith('[POST]'):
 		base, ext     = os.path.splitext(filename)
 
 		if base.startswith('content/') and ext in ('.rst','.md'):
-			title = BLOG.get_post_title(filename)
-			url   = BLOG.get_post_url(filename)
+			title = BLOG.get_post_title(post_filename)
+			url   = BLOG.get_post_url(post_filename)
 
 			if BITLY_API:
 				s = BITLY_API.shorten(url)

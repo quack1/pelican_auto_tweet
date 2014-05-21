@@ -8,9 +8,9 @@ Both Markdown and Rest syntax are supported. The 'Slug' tag **have** to be set
 '''
 
 __author__     = 'quack1'
-__version__    = '0.4'
-__date__       = '2013-11-11'
-__copyright__  = 'Copyright © 2013, Quack1'
+__version__    = '0.5'
+__date__       = '2014-05-21'
+__copyright__  = 'Copyright © 2013-2014, Quack1'
 __licence__    = 'BSD'
 __credits__    = ['Quack1']
 __maintainer__ = 'Quack1'
@@ -31,6 +31,7 @@ import bitly_api as bitlyapi
 import unicodedata
 
 from conf import *
+import libpelican
 
 
 
@@ -107,7 +108,7 @@ except:
 	SUMMARY_INTERVAL = 180
 
 
-BLOG.get_site_base_url()
+SITE_BASE_URL = BLOG.get_site_base_url()
 
 # Trying to connect to BitlyAPI
 try:
@@ -122,7 +123,7 @@ try:
 except:
 	BITLY_API = None
 
-for post_filename in BLOG.get_posts:
+for post_filename in BLOG.get_posts():
 	post_date = BLOG.get_post_date(post_filename).date()
 	if post_date+datetime.timedelta(SUMMARY_DAYS) >= TODAY:
 		title = BLOG.get_post_title(post_filename)

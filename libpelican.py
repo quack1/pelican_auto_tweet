@@ -6,9 +6,9 @@ blog posts.
 '''
 
 __author__     = 'quack1'
-__version__    = '0.1'
-__date__       = '2014-05-04'
-__copyright__  = 'Copyright © 2014, Quack1'
+__version__    = '0.5'
+__date__       = '2014-05-21'
+__copyright__  = 'Copyright © 2013-2014, Quack1'
 __licence__    = 'BSD'
 __credits__    = ['Quack1']
 __maintainer__ = 'Quack1'
@@ -53,7 +53,7 @@ class PelicanBlog:
 		regex = re.compile("^%s\s*:\s*(.*)$"%post_info, re.IGNORECASE)
 
 		#with open(os.path.join(self._content_directory, post_filename),"r") as f:
-		with open(post_filename),"r") as f:
+		with open(os.path.join(self._content_directory, post_filename),"r") as f:
 			for line in f:
 				res = regex.search(line)
 				if res:
@@ -118,7 +118,7 @@ class PelicanBlog:
 		l = os.listdir(self._content_directory)
 		posts = []
 		for post_filename in l:
-			base,ext = os.path.splitext(filename)
+			base,ext = os.path.splitext(post_filename)
 			if ext in ('.rst','.md'):
 				posts.append(post_filename)
 		return posts
@@ -129,7 +129,6 @@ class PelicanBlog:
 		for post_filename in l:
 			base,ext = os.path.splitext(post_filename)
 			if ext in ('.rst','.md'):
-				filename = os.path.join(self._content_directory, post_filename)
-				if self.get_post_status(filename).upper() == "DRAFT":
+				if self.get_post_status(post_filename).upper() == "DRAFT":
 					posts.append(post_filename)
 		return posts

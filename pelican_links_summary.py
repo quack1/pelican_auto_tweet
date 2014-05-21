@@ -4,9 +4,9 @@
 '''This script is used to create a page on a Pelican blog with the last links shared on Twitter.'''
 
 __author__     = 'quack1'
-__version__    = '0.1'
-__date__       = '2014-01-01'
-__copyright__  = 'Copyright © 2014, Quack1'
+__version__    = '0.5'
+__date__       = '2014-05-21'
+__copyright__  = 'Copyright © 2013-2014, Quack1'
 __licence__    = 'BSD'
 __credits__    = ['Quack1']
 __maintainer__ = 'Quack1'
@@ -24,7 +24,6 @@ import sys
 import twitter
 
 from conf import *
-import libpelican
 
 
 TWITTER_API  = None
