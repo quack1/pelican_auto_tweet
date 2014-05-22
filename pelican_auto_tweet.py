@@ -104,8 +104,9 @@ if not TWEET_FORMAT_AUTO:
 
 if log_message.startswith('[POST]'):
 
+	f = [os.path.basename(x) for x in files]
 	# Check that we are not publishing a draft
-	if BLOG.posts_have_drafts(files):
+	if BLOG.posts_have_drafts(f):
 		print "You are about to publish drafts."
 		response = raw_input("Do you want to publish them (y-n) ? [n]")
 		if not response:
@@ -125,7 +126,6 @@ if log_message.startswith('[POST]'):
 	for filename in files:
 		post_filename = os.path.basename(filename)
 		base, ext     = os.path.splitext(filename)
-
 		if base.startswith('content/') and ext in ('.rst','.md'):
 			title = BLOG.get_post_title(post_filename)
 			url   = BLOG.get_post_url(post_filename)
