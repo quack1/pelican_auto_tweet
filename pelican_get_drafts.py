@@ -35,3 +35,5 @@ BLOG = libpelican.PelicanBlog(base_dir)
 drafts = BLOG.get_drafts()
 for article in drafts:
 	print "File '%s' ([%s] %s)"%(article, BLOG.get_post_date(article), BLOG.get_post_title(article))
+
+# END
