@@ -40,7 +40,7 @@ def twitter_connect():
     access_token_secret=ACCESS_TOKEN_SECRET)
 
 
-# Get the id of the last tweet for which we got a link
+# Get the id of the last tweet in which we find a link
 if os.path.exists(LAST_ID_FILE):
 	with open(LAST_ID_FILE, "r") as f:
 		try:
@@ -51,20 +51,20 @@ else:
 	LAST_ID = 0
 
 
-# Connect to Twitter and get tweets
+# Connect to Twitter and get the tweets sent since the LAST_ID, limiting the
+# result to 200 tweets.
 twitter_connect()
 print LAST_ID
 tweets = TWITTER_API.GetUserTimeline(screen_name=TWITTER_USERNAME, since_id=LAST_ID, count=200, include_rts=False,exclude_replies=True)
 
-# Get Timestamp for last day
+# Get the timestamp for the last day
 date_start = datetime.date.today() - datetime.timedelta(1)
 date_end   = datetime.date.today()
 
 date_start_timestamp = (date_start - datetime.date(1970, 1, 1)).total_seconds()
 date_end_timestamp = (date_end - datetime.date(1970, 1, 1)).total_seconds()
 
-
-# Generate content with the links
+# Generate the new content from the links
 CONTENT = u""
 urls = []
 
@@ -72,55 +72,82 @@ for tweet in tweets:
 	timestamp = tweet.GetCreatedAtInSeconds()
 	raw_text   = tweet.GetText()
 
+	# If the tweet matches some criteria, its link will be shared on the
+	# blog page.
+	# The criteria are (in the 'if' order):
+	#	- published in the last day
+	#	- is not a mention to someone
+	#	- is not a retweet
+	#	- was not published automaticaly by the blog
+	#	- is not a replay for one of the lastest articles.
 	if timestamp >= date_start_timestamp and timestamp < date_end_timestamp and not raw_text.startswith("@") and not raw_text.startswith("RT") and not "#blog" in raw_text and not "#blogReplay" in raw_text:		
 		
 		final_text = u""
 
+		# Is there a URL in the tweet ?
 		res = re.search(RE_URL, raw_text)
 		if not res:
 			continue
 
-		# Search each url in the tweet
+		# Search each URL in the tweet
 		for item in raw_text.split(" "):
 			res = re.search(RE_URL, item)
 			if res:
-				# The item is an url
+				# The item is a URL, and it's added to the text of the line
+				# as a URL
 				url = res.group("url")
 				urls.append(url)
 				final_text += u"[%s](%s) "%(url,url)
 			else:
-				# The item is just a "word"
+				# The item is just a "word", and it's added too to the
+				# line
 				final_text += u"%s "%item
+		# Replace the commentary mark by its HTML equivalent.
 		if final_text.startswith("#"):
 			final_text = "&#35;" + final_text[1:]
+
+		# Add the line to the content of the page
 		CONTENT += u"\n\n%s"%final_text
 		print raw_text.encode("utf-8")
 
-# Generate the page header
+# Generate the page header from a format in the configuration file.
+# The 'now' timestamp is used to keep a trace of the latest modification
 header = PAGE_HEADER%(datetime.datetime.now().strftime('%Y-%m-%d %H:%M'))
 
-# Write the content in the source file
+# The content is written in the source file
+# The resulting source will be :
+#	- HEADER
+#	- New content
+#	- Previous content
 with open(LINKS_OUT_FILE+"_tmp",'w') as f:
 	f.write(header+"\n")
 	f.write(CONTENT.encode("utf-8")+"\n")
+	# Read the old content
 	with open(LINKS_OUT_FILE, "r") as fIn:
+		# Pass the old header
 		for c in xrange(header.count('\n')+1):
 			fIn.readline()
+		# Add the other lines (the real content)
 		line = fIn.readline()
 		while line:
 			f.write(line)
 			line = fIn.readline()
+
+# Remove the old page source file, and move the temporary source file
+# to the real page source file.
 os.remove(LINKS_OUT_FILE)
 os.rename(LINKS_OUT_FILE+"_tmp", LINKS_OUT_FILE)
 
-
-# Write the new last ID
+# Write the new last ID in the log file
 if len(tweets):
 	LAST_ID = tweets[0].GetId()
 	with open(LAST_ID_FILE, "w") as f:
 		f.write(str(LAST_ID))
 
+# Exit with a custom error code
 if len(urls) > 0:
 	sys.exit(0)
 else:
 	sys.exit(1)
+
+# END
