@@ -47,9 +47,9 @@ class PelicanBlog:
 	'''
 
 
-	_blog_directory    = ""
-	_content_directory = ""
-	_blog_base_url     = ""
+	_blog_directory    = None
+	_content_directory = None
+	_blog_base_url     = None
 
 	_REGEX_BASE_URL = re.compile(r'SITEURL = \'(.*)\'',re.IGNORECASE)
 
@@ -196,8 +196,6 @@ class PelicanBlog:
 		TODO: If the slug option is not defined, generate the URL with
 		  the Pelican core method.
 		'''
-		# TODO: If the slug is not defined, generate the slug from the Title of
-		# the post.
 		return self._get_post_info(post_filename, "Slug")
 
 	def get_post_summary(self, post_filename):
@@ -277,6 +275,9 @@ class PelicanBlog:
 	
 	def get_drafts(self):
 		'''Get the list of all drafts of the blog.
+
+		To be considered as a draft, the status of the article (get with the
+			`get_post_status()` method), uppercase, has to be 'DRAFT'.
 
 		Returns:
 		  A list containing all the drafts of the blog.
