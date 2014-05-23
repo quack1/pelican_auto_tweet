@@ -6,3 +6,11 @@
 
 - Documentation in code
 - Best handling of error cases
+- In libpelican.get_post_date : if the returned string is "", return a timestamp 0
+- Pelican_auto_tweet : Use a git library
+- Pelican_auto_tweet : Meilleure gestion des drafts
+- Pelican_auto_tweet : Générer le texte du commit en prenant en compte le fait qu'il peut manquer des variables dans le format (exemple, pas de $$post_title$$).
+- Rename configuration variables
+- Pelican_tweet_summary : factoriser le code : lignes 138-140 à remplacer par les lignes 182-185
+- Pelican_tweet_summary : Ligne 225 : Supprimer les caractères html du tweet directement dans le title, pour gagner quelques chars.
+- Pelican_links_summary : Regenerate the blog at the end of the script
