@@ -62,7 +62,7 @@ def twitter_connect():
 
 def twitter_send(text):
 	'''Post a new tweet on Twitter.
-	If the API is not connected, a call to twitter_connect() is make.'''
+	If the API is not connected, a call to twitter_connect() is made.'''
 	if not TWITTER_API:
 		twitter_connect()
 	TWITTER_API.PostUpdate(text)
@@ -154,3 +154,5 @@ if log_message.startswith('[POST]'):
 
 			# Post tweet
 			twitter_send(tweet_text)
+
+#END
