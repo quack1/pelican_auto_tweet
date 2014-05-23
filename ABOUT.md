@@ -23,3 +23,6 @@
 	  are sent as they are displayed in browser.
 - 0.4
 	- Improve customisation of the script with configuration file
+- 0.5
+	- Factorize code to interact with Pelican blog in libpelican
+	- Improve documentation (Python Doc and inline documentation)
