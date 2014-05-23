@@ -21,13 +21,17 @@ import os.path
 import datetime
 
 # Check arguments
+# If one argument is passed, it will be considered as the base blog directory.
+# If it's not present, the current working directory will be used.
 if len(sys.argv) >= 2:
 	base_dir = sys.argv[1]
 else:
 	base_dir = './'
 
+# A new blog instance is created on this directory.
 BLOG = libpelican.PelicanBlog(base_dir)
 
+# Get the drafts from the blog instance and print them.
 drafts = BLOG.get_drafts()
 for article in drafts:
 	print "File '%s' ([%s] %s)"%(article, BLOG.get_post_date(article), BLOG.get_post_title(article))
