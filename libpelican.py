@@ -232,6 +232,20 @@ class PelicanBlog:
 		'''
 		return self._get_post_info(post_filename, "Status")
 
+	def is_draft(self, post_filename):
+		'''Returns the 'draft' status of a blog post.
+		If the uppercase status of the blog post is 'DRAFT', it is considered
+		as a draft.
+
+		Args:
+		  post_filename:
+		    The filename of the article.
+
+		Returns:
+		  True if the blog post is a draft.
+		'''
+		return self.get_post_status(post_filename).upper() == 'DRAFT'
+
 	def posts_have_drafts(self, posts_filenames):
 		'''Look if a list of articles contains drafts.
 		Args:
