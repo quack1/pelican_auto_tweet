@@ -4,7 +4,6 @@
 
 # Issue
 
-- Documentation in code
 - Best handling of error cases
 - In libpelican.get_post_date : if the returned string is "", return a timestamp 0
 - Pelican_auto_tweet : Use a git library
