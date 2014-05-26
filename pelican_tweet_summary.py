@@ -35,14 +35,13 @@ import libpelican
 
 
 
-TODAY          = datetime.date.today()
-TWITTER_API    = None
-FIRST_TWEETED  = False
-SLUGS          = []
-DATES          = []
-TITLES         = []
-BITLY_API      = None
-LOG_FILE       = '/var/log/pelican_auto_tweet/summary.log'
+TODAY         = datetime.date.today()
+TWITTER_API   = None
+FIRST_TWEETED = False
+SLUGS         = []
+POSTS         = []
+BITLY_API     = None
+LOG_FILE      = '/var/log/pelican_auto_tweet/summary.log'
 
 #
 # From http://stackoverflow.com/questions/753052/strip-html-from-strings-in-python
@@ -128,17 +127,28 @@ try:
 except:
 	BITLY_API = None
 
-# Get all the blog articles. Every article published in the last `SUMMARY_DAYS`
-# days, a tweet will be published.
+
+# Get all the blog articles. For every article published in the last 
+# `SUMMARY_DAYS` days, a tweet will be published.
+# A new array is created with the blog posts that have to be tweeted.
+# This array contains dicts containing :
+#	- the URL of the article
+#	- the date of the article
+#	- and its title.
+# This array is finally sorted by the publication date.
 for post_filename in BLOG.get_posts():
 	post_date = BLOG.get_post_date(post_filename).date()
 	if post_date + datetime.timedelta(SUMMARY_DAYS) >= TODAY:
 		title = BLOG.get_post_title(post_filename)
 		url   = BLOG.get_post_url(post_filename)
 		if not url in SLUGS:
+			p = dict()
+			p['url'] = url
+			p['date'] = post_date
+			p['title'] = title
 			SLUGS.append(url)
-			DATES.append(post_date)
-			TITLES.append(title)	
+			POSTS.append(p)
+POSTS.sort(key=lambda item:item['date'])
 
 # Get the tweet format from the configuration file. If the format is not present,
 # a default one is created.
@@ -178,20 +188,7 @@ if IS_TWEET_SUMMARY_END:
 # After opening the log file, the tweets are sent.
 with open(LOG_FILE, 'a') as log_file:
 	log_file.write('[%s] %s'%(TODAY, BASE_DIR) + "\n")
-	if len(SLUGS):
-
-		# A new array is created with the blog posts that have to be tweeted.
-		# This array contains dicts containing :
-		#	- the URL of the article
-		#	- the date of the article
-		#	- and its title.
-		# This array is finally sorted by the publication date.
-		POSTS = []
-		for i in xrange(len(SLUGS)):
-			article = {'url':SLUGS[i],'date':DATES[i],'title':TITLES[i]}
-			POSTS.append(article)
-		POSTS.sort(key=lambda item:item['date'])
-		
+	if len(POSTS):		
 		# Post the first tweet
 		if IS_TWEET_SUMMARY_BEGIN:
 			first_tweet(TWEET_SUMMARY_BEGIN)
@@ -235,12 +232,12 @@ with open(LOG_FILE, 'a') as log_file:
 		# of tweets. In this purpose, the TWEET_SUMMARY_END_MANY variable **has** 
 		# to contains a '%d' (integer) replacement tag.
 		if IS_TWEET_SUMMARY_END:
-			if len(SLUGS) == 1:
+			if len(POSTS) == 1:
 				twitter_send(TWEET_SUMMARY_END_ONE)
 				log_file.write(TWEET_SUMMARY_END_ONE + "\n")
 			else:	
-				twitter_send(TWEET_SUMMARY_END_MANY%len(SLUGS))
-				log_file.write(TWEET_SUMMARY_END_MANY%len(SLUGS) + "\n")
+				twitter_send(TWEET_SUMMARY_END_MANY%len(POSTS))
+				log_file.write(TWEET_SUMMARY_END_MANY%len(POSTS) + "\n")
 	else:
 		# If no new articles were published, log it.
 		log_file.write("No new posts\n")
