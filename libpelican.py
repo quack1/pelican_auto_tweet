@@ -139,12 +139,13 @@ class PelicanBlog:
 
 		Returns:
 		  The date of the article in a **datetime** object.
-
-		TODO: If `get_post_info` returns a blank string, return a datetime set to 
-		  the timestamp 0.
+		  If the date is not defined in the article, None is returned.
 		'''
 		date = self._get_post_info(post_filename, "Date").strip()
-		return datetime.datetime.strptime(date, "%Y-%m-%d %H:%M")
+		if date is None or date == "":
+			return None
+		else:
+			return datetime.datetime.strptime(date, "%Y-%m-%d %H:%M")
 
 	def get_post_author(self, post_filename):
 		'''Get the author of a blog post.
