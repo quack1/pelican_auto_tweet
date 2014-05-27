@@ -130,6 +130,7 @@ except:
 
 # Get all the blog articles. For every article published in the last 
 # `SUMMARY_DAYS` days, a tweet will be published.
+# Tweets are not sent for the drafts.
 # A new array is created with the blog posts that have to be tweeted.
 # This array contains dicts containing :
 #	- the URL of the article
@@ -137,17 +138,18 @@ except:
 #	- and its title.
 # This array is finally sorted by the publication date.
 for post_filename in BLOG.get_posts():
-	post_date = BLOG.get_post_date(post_filename).date()
-	if post_date + datetime.timedelta(SUMMARY_DAYS) >= TODAY:
-		title = BLOG.get_post_title(post_filename)
-		url   = BLOG.get_post_url(post_filename)
-		if not url in SLUGS:
-			p = dict()
-			p['url'] = url
-			p['date'] = post_date
-			p['title'] = title
-			SLUGS.append(url)
-			POSTS.append(p)
+	if not BLOG.is_draft(post_filename):
+		post_date = BLOG.get_post_date(post_filename).date()
+		if post_date + datetime.timedelta(SUMMARY_DAYS) >= TODAY:
+			title = BLOG.get_post_title(post_filename)
+			url   = BLOG.get_post_url(post_filename)
+			if not url in SLUGS:
+				p = dict()
+				p['url'] = url
+				p['date'] = post_date
+				p['title'] = title
+				SLUGS.append(url)
+				POSTS.append(p)
 POSTS.sort(key=lambda item:item['date'])
 
 # Get the tweet format from the configuration file. If the format is not present,
