@@ -114,6 +114,10 @@ for tweet in tweets:
 # The 'now' timestamp is used to keep a trace of the latest modification
 header = PAGE_HEADER%(datetime.datetime.now().strftime('%Y-%m-%d %H:%M'))
 
+# Get the lastest version of the sources from the git repository
+# Pull the last modifications in the git repository
+os.system('git pull --commit --no-edit')
+
 # The content is written in the source file
 # The resulting source will be :
 #	- HEADER
@@ -144,8 +148,16 @@ if len(tweets):
 	with open(LAST_ID_FILE, "w") as f:
 		f.write(str(LAST_ID))
 
-# Exit with a custom error code
+# If new links were added, commit the modifications and exit with
+# a custom error code
 if len(urls) > 0:
+	# Commit and push the new updates into the git repository
+	os.system('git add %s'%LINKS_OUT_FILE)
+	os.system('git commit -m "Add %d new Twitter links"'%len(urls))
+	os.system('git push')
+	# Generate and upload the blog
+	os.system('make ssh_upload')
+	# Exit
 	sys.exit(0)
 else:
 	sys.exit(1)
