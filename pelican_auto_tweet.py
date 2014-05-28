@@ -30,7 +30,7 @@ import bitly_api as bitlyapi
 # From http://code.google.com/p/python-twitter/
 import twitter
 
-from conf import *
+import conf
 import libpelican
 
 TWITTER_API = None
@@ -56,9 +56,9 @@ def strip_tags(html):
 def twitter_connect():
 	'''Connect the API to Twitter with the OAuth protocol.'''
 	global TWITTER_API
-	TWITTER_API = twitter.Api(consumer_key=CONSUMER_KEY, 
-		consumer_secret=CONSUMER_SECRET, access_token_key=ACCESS_TOKEN, 
-    access_token_secret=ACCESS_TOKEN_SECRET)
+	TWITTER_API = twitter.Api(consumer_key=conf.Twitter.consumer_key, 
+		consumer_secret=conf.Twitter.consumer_secret, access_token_key=conf.Twitter.access_token_key, 
+    	access_token_secret=conf.Twitter.access_token_secret)
 
 def twitter_send(text):
 	'''Post a new tweet on Twitter.
@@ -74,22 +74,26 @@ def twitter_send(text):
 # If it's not present, the current working directory will be used.
 if len(sys.argv) >= 2:
 	base_dir = sys.argv[1]
+elif conf.Global.blog_directory:
+	base_dir = conf.Global.blog_directory
 else:
 	base_dir = './'
+
+print base_dir
 
 # A new blog instance is created on this directory.
 BLOG = libpelican.PelicanBlog(base_dir)
 
 # Try to connect to BitlyAPI
 try:
-	if not BITLY_USER:
-		print("Error. No BITLY_USER defined.")
-	if not BITLY_API_KEY:
-		print("Error. No BITLY_API_KEY defined.")
-	BITLY_API = bitlyapi.Connection(BITLY_USER, BITLY_API_KEY)
+	if not conf.Bitly.user:
+		print("Error. No conf.Bitly.user defined.")
+	if not conf.Bitly.api_key:
+		print("Error. No conf.Bitly.api_key defined.")
+	BITLY_API = bitlyapi.Connection(conf.Bitly.user, conf.Bitly.api_key)
 	# Test Bitly connection. If the link to Bitly API is down, an exception is thrown and
 	# Bitly will not be used.
-	BITLY_API.lookup(SITE_BASE_URL)
+	BITLY_API.lookup(BLOG.get_site_base_url())
 except:
 	BITLY_API = None
 
@@ -104,8 +108,10 @@ files       = result.splitlines()[1:]
 
 # Get the tweet format from the configuration file. If the format is not present,
 # a default one is created.
-if not TWEET_FORMAT_AUTO:
+if not conf.Auto.tweet_format:
 	TWEET_FORMAT_AUTO = '$$POST_TITLE$$ $$POST_URL$$ #blog'
+else:
+	TWEET_FORMAT_AUTO = conf.Auto.tweet_format
 
 # If the log message starts by '[POST]', it means that (at least) one new post was 
 # writen and needs to be published. 

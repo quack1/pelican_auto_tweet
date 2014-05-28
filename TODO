@@ -7,4 +7,9 @@
 - Best handling of error cases
 - Pelican_auto_tweet : Use a git library
 - Pelican_auto_tweet : Meilleure gestion des drafts
-- Rename configuration variables
+- Plusieurs scripts : 'if conf.blog_directory' gerer le cas ou conf n'existe pas ou n'est pas importé
+- Libtwitter
+
+# v1.0
+
+- Rename the project : 'pelican_auto_tweet' -> 'pelican-twitter'
