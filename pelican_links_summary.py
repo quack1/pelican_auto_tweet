@@ -138,6 +138,16 @@ with open(LINKS_OUT_FILE+"_tmp",'w') as f:
 os.remove(LINKS_OUT_FILE)
 os.rename(LINKS_OUT_FILE+"_tmp", LINKS_OUT_FILE)
 
+# Pull the last modifications in the git repository
+os.system('git pull --commit --no-edit')
+# Add the modifications and commit them
+os.system('git add %s'%LINKS_OUT_FILE)
+os.system('git commit -m "Add new Twitter links"')
+# Push our updates
+os.system('git push')
+# Generate and upload the blog
+os.system('make ssh_upload')
+
 # Write the new last ID in the log file
 if len(tweets):
 	LAST_ID = tweets[0].GetId()
