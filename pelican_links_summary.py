@@ -4,7 +4,7 @@
 '''This script is used to create a page on a Pelican blog with the last links shared on Twitter.'''
 
 __author__     = 'quack1'
-__version__    = '0.6'
+__version__    = '0.7'
 __date__       = '2014-05-27'
 __copyright__  = 'Copyright © 2013-2014, Quack1'
 __licence__    = 'BSD'

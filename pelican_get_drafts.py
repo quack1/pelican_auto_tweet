@@ -6,7 +6,7 @@ If no argument is passed, the current directory ('.') is used.
 '''
 
 __author__     = 'quack1'
-__version__    = '0.5'
+__version__    = '0.7'
 __date__       = '2014-05-21'
 __copyright__  = 'Copyright © 2013-2014, Quack1'
 __licence__    = 'BSD'
