@@ -8,7 +8,7 @@ Both Markdown and Rest syntax are supported. The 'Slug' tag **has** to be set
 '''
 
 __author__     = 'quack1'
-__version__    = '0.6'
+__version__    = '0.7'
 __date__       = '2014-05-27'
 __copyright__  = 'Copyright © 2013-2014, Quack1'
 __licence__    = 'BSD'
@@ -30,7 +30,7 @@ import twitter
 import bitly_api as bitlyapi
 import unicodedata
 
-from conf import *
+import conf
 import libpelican
 
 
@@ -63,9 +63,9 @@ def strip_tags(html):
 def twitter_connect():
 	'''Connect the API to Twitter with the OAuth protocol.'''
 	global TWITTER_API
-	TWITTER_API = twitter.Api(consumer_key=CONSUMER_KEY, 
-		consumer_secret=CONSUMER_SECRET, access_token_key=ACCESS_TOKEN, 
-		access_token_secret=ACCESS_TOKEN_SECRET)
+	TWITTER_API = twitter.Api(consumer_key=conf.Twitter.consumer_key, 
+		consumer_secret=conf.Twitter.consumer_secret, access_token_key=conf.Twitter.access_token_key, 
+		access_token_secret=conf.Twitter.access_token_secret)
 
 def twitter_send(text):
 	'''Post an update on Twitter.
@@ -85,8 +85,8 @@ def first_tweet(msg):
 # If it's not present, the current working directory will be used.
 if len(sys.argv) >= 2:
 	base_dir = sys.argv[1]
-elif BASE_DIR:	# BASE_DIR comes from conf.py
-	base_dir = BASE_DIR
+elif conf.Global.blog_directory:	# BASE_DIR comes from conf.py
+	base_dir = conf.Global.blog_directory
 else:
 	base_dir = './'
 
@@ -96,31 +96,37 @@ BLOG = libpelican.PelicanBlog(base_dir)
 # Get in the configuration file the number of days for which posts should be 
 # considered as new. If the configuration file is not present a default value
 # is used.
+days = 0
 try:
-	if SUMMARY_DAYS < 0:
-		SUMMARY_DAYS = 0
+	if conf.Summary.days < 0:
+		days = 0
+	else:
+		days = conf.Summary.days
 except:
 	print('Using default number of days : 7')
-	SUMMARY_DAYS = 7
+	days = 7
 
 # Get in the configuration file the interval between two new twitter updates.  
 # If the configuration file is not present a default value is used. The value 
 # is in seconds.
+interval = 0
 try:
-	if SUMMARY_INTERVAL < 0:
-		SUMMARY_INTERVAL = 0
+	if conf.Summary.interval < 0:
+		interval = 0
+	else:
+		interval = conf.Summary.interval
 except:
-	print('Using default interval : 180s')
-	SUMMARY_INTERVAL = 180
+	print('Using default number of interval : 180s')
+	interval = 180
 
 
 # Trying to connect to BitlyAPI
 try:
-	if not BITLY_USER:
-		print("Error. No BITLY_USER defined.")
-	if not BITLY_API_KEY:
-		print("Error. No BITLY_API_KEY defined.")
-	BITLY_API = bitlyapi.Connection(BITLY_USER, BITLY_API_KEY)
+	if not conf.Bitly.user:
+		print("Error. No conf.Bitly.user defined.")
+	if not conf.Bitly.api_key:
+		print("Error. No conf.Bitly.api_key defined.")
+	BITLY_API = bitlyapi.Connection(conf.Bitly.user, conf.Bitly.api_key)
 	# Test Bitly connection. If the link to Bitly API is down, an exception is 
 	# thrown and Bitly will not be used.
 	BITLY_API.lookup(BLOG.get_site_base_url())
@@ -129,7 +135,7 @@ except:
 
 
 # Get all the blog articles. For every article published in the last 
-# `SUMMARY_DAYS` days, a tweet will be published.
+# `conf.Summary.days` days, a tweet will be published.
 # Tweets are not sent for the drafts.
 # A new array is created with the blog posts that have to be tweeted.
 # This array contains dicts containing :
@@ -140,7 +146,7 @@ except:
 for post_filename in BLOG.get_posts():
 	if not BLOG.is_draft(post_filename):
 		post_date = BLOG.get_post_date(post_filename).date()
-		if post_date + datetime.timedelta(SUMMARY_DAYS) >= TODAY:
+		if post_date + datetime.timedelta(days) >= TODAY:
 			title = BLOG.get_post_title(post_filename)
 			url   = BLOG.get_post_url(post_filename)
 			if not url in SLUGS:
@@ -154,50 +160,59 @@ POSTS.sort(key=lambda item:item['date'])
 
 # Get the tweet format from the configuration file. If the format is not present,
 # a default one is created.
-if not TWEET_FORMAT_SUMMARY:
-	TWEET_FORMAT_SUMMARY = '#blogReplay $$POST_TITLE$$ $$POST_URL$$ #blog'
+if not conf.Summary.tweet_format:
+	TWEET_FORMAT = '#blogReplay $$POST_TITLE$$ $$POST_URL$$ #blog'
+else:
+	TWEET_FORMAT = conf.Summary.tweet_format
 
 # Get the length of 'pure' text of the TWEET_FORMAT. 
 # We suppress, by now, two variables : 
 #	- $$POST_TITLE$$ -> Will be replaced by the title of the article
 #	- $$POST_URL$$ -> Will be replaced by the URL to the article
-TWEET_FORMAT_LENGTH = len(TWEET_FORMAT_SUMMARY)
-if '$$POST_TITLE$$' in TWEET_FORMAT_SUMMARY:
+TWEET_FORMAT_LENGTH = len(TWEET_FORMAT)
+if '$$POST_TITLE$$' in TWEET_FORMAT:
 	TWEET_FORMAT_LENGTH -= len('$$POST_TITLE$$')
-if '$$POST_URL$$' in TWEET_FORMAT_SUMMARY:
+if '$$POST_URL$$' in TWEET_FORMAT:
 	TWEET_FORMAT_LENGTH -= len('$$POST_URL$$')
 
 # Get the text for the first tweet from the configuration file. If the format is 
 # not present, a default one is used.
 # Only one variable can be used in the format : 
 #	- $$BLOG_URL$$ -> Will be replaced by the URL ot the blog
-if IS_TWEET_SUMMARY_BEGIN:
-	if not TWEET_SUMMARY_BEGIN:
-		TWEET_SUMMARY_BEGIN = '#blogReplay Voici les articles publiés ces %d derniers jours sur $$BLOG_URL$$'%(SUMMARY_DAYS)
-	if '$$BLOG_URL$$' in TWEET_SUMMARY_BEGIN:
-		TWEET_SUMMARY_BEGIN = TWEET_SUMMARY_BEGIN.replace('$$BLOG_URL$$', BLOG.get_site_base_url())
+if conf.Summary.tweet_begin:
+	if not conf.Summary.tweet_format_begin:
+		TWEET_BEGIN = '#blogReplay Voici les articles publiés ces %d derniers jours sur $$BLOG_URL$$'%(days)
+	else:
+		TWEET_BEGIN = conf.Summary.tweet_format_begin
+	if '$$BLOG_URL$$' in TWEET_BEGIN:
+		TWEET_BEGIN = TWEET_BEGIN.replace('$$BLOG_URL$$', BLOG.get_site_base_url())
 
 # Get the text for the last tweet from the configuration file. If the format is 
 # not present, a default one is used.
 # No variable can be used in the format
-if IS_TWEET_SUMMARY_END: 
-	if not TWEET_SUMMARY_END_ONE:
-		TWEET_SUMMARY_END_ONE = "#blogReplay C'était le seul article publié cette semaine. Fin du spam! :)"
-	if not TWEET_SUMMARY_END_MANY:
-		TWEET_SUMMARY_END_MANY = "#blogReplay C'était les %d articles publiés cette semaine. Fin du spam! :)"
+if conf.Summary.tweet_end: 
+	if not conf.Summary.tweet_format_end_one:
+		TWEET_END_ONE = "#blogReplay C'était le seul article publié cette semaine. Fin du spam! :)"
+	else:
+		TWEET_END_ONE = conf.Summary.tweet_format_end_one
+
+	if not conf.Summary.tweet_format_end_many:
+		TWEET_END_MANY = "#blogReplay C'était les %d articles publiés cette semaine. Fin du spam! :)"
+	else:
+		TWEET_END_MANY = conf.Summary.tweet_format_end_many
 
 
 # After opening the log file, the tweets are sent.
 with open(LOG_FILE, 'a') as log_file:
-	log_file.write('[%s] %s'%(TODAY, BASE_DIR) + "\n")
+	log_file.write('[%s] %s'%(TODAY, base_dir) + "\n")
 	if len(POSTS):		
 		# Post the first tweet
-		if IS_TWEET_SUMMARY_BEGIN:
-			first_tweet(TWEET_SUMMARY_BEGIN)
+		if conf.Summary.tweet_begin:
+			first_tweet(TWEET_BEGIN)
 
 		# Post a new tweet for each article
 		for a in POSTS:
-			time.sleep(SUMMARY_INTERVAL)
+			time.sleep(interval)
 
 			# Get the title and the URL of the article and, if necessary, 
 			# shorten it.
@@ -221,7 +236,7 @@ with open(LOG_FILE, 'a') as log_file:
 
 			# Generate the tweet message from TWEET_FORMAT, and remove any extra
 			# HTML character.
-			tweet_text = TWEET_FORMAT_SUMMARY.replace('$$POST_TITLE$$', title)
+			tweet_text = TWEET_FORMAT.replace('$$POST_TITLE$$', title)
 			tweet_text = tweet_text.replace('$$POST_URL$$', url)
 			tweet_text = strip_tags(tweet_text)
 
@@ -233,13 +248,13 @@ with open(LOG_FILE, 'a') as log_file:
 		# If more than one tweet were sent, the last tweet will contains the number
 		# of tweets. In this purpose, the TWEET_SUMMARY_END_MANY variable **has** 
 		# to contains a '%d' (integer) replacement tag.
-		if IS_TWEET_SUMMARY_END:
+		if conf.Summary.tweet_end:
 			if len(POSTS) == 1:
-				twitter_send(TWEET_SUMMARY_END_ONE)
-				log_file.write(TWEET_SUMMARY_END_ONE + "\n")
+				twitter_send(TWEET_END_ONE)
+				log_file.write(TWEET_END_ONE + "\n")
 			else:	
-				twitter_send(TWEET_SUMMARY_END_MANY%len(POSTS))
-				log_file.write(TWEET_SUMMARY_END_MANY%len(POSTS) + "\n")
+				twitter_send(TWEET_END_MANY%len(POSTS))
+				log_file.write(TWEET_END_MANY%len(POSTS) + "\n")
 	else:
 		# If no new articles were published, log it.
 		log_file.write("No new posts\n")

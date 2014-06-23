@@ -7,6 +7,9 @@
 - Best handling of error cases
 - Pelican_auto_tweet : Use a git library
 - Pelican_auto_tweet : Meilleure gestion des drafts
-- Pelican_auto_tweet : Générer le texte du commit en prenant en compte le fait qu'il peut manquer des variables dans le format (exemple, pas de $$post_title$$).
-- Rename configuration variables
-- Pelican_links_summary : Add git pull / commit&merge / ajout des liens / commit&push / Regenerate the blog at the end of the script
+- Plusieurs scripts : 'if conf.blog_directory' gerer le cas ou conf n'existe pas ou n'est pas importé
+- Libtwitter
+
+# v1.0
+
+- Rename the project : 'pelican_auto_tweet' -> 'pelican-twitter'

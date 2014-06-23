@@ -4,7 +4,7 @@
 '''This script is used to create a page on a Pelican blog with the last links shared on Twitter.'''
 
 __author__     = 'quack1'
-__version__    = '0.6'
+__version__    = '0.7'
 __date__       = '2014-05-27'
 __copyright__  = 'Copyright © 2013-2014, Quack1'
 __licence__    = 'BSD'
@@ -23,7 +23,7 @@ import sys
 # From http://code.google.com/p/python-twitter/
 import twitter
 
-from conf import *
+import conf
 
 
 TWITTER_API  = None
@@ -35,9 +35,9 @@ RE_URL       = r"(?P<url>https?://[^\s]+)"
 def twitter_connect():
 	'''Connect the API to Twitter with the OAuth protocol.'''
 	global TWITTER_API
-	TWITTER_API = twitter.Api(consumer_key=CONSUMER_KEY, 
-		consumer_secret=CONSUMER_SECRET, access_token_key=ACCESS_TOKEN, 
-    access_token_secret=ACCESS_TOKEN_SECRET)
+	TWITTER_API = twitter.Api(consumer_key=conf.Twitter.consumer_key, 
+		consumer_secret=conf.Twitter.consumer_secret, access_token_key=conf.Twitter.access_token_key, 
+    access_token_secret=conf.Twitter.access_token_secret)
 
 
 # Get the id of the last tweet in which we find a link
@@ -55,7 +55,7 @@ else:
 # result to 200 tweets.
 twitter_connect()
 print LAST_ID
-tweets = TWITTER_API.GetUserTimeline(screen_name=TWITTER_USERNAME, since_id=LAST_ID, count=200, include_rts=False,exclude_replies=True)
+tweets = TWITTER_API.GetUserTimeline(screen_name=conf.Links.twitter_username, since_id=LAST_ID, count=200, include_rts=False,exclude_replies=True)
 
 # Get the timestamp for the last day
 date_start = datetime.date.today() - datetime.timedelta(1)
@@ -112,18 +112,32 @@ for tweet in tweets:
 
 # Generate the page header from a format in the configuration file.
 # The 'now' timestamp is used to keep a trace of the latest modification
-header = PAGE_HEADER%(datetime.datetime.now().strftime('%Y-%m-%d %H:%M'))
+header = conf.Links.page_header%(datetime.datetime.now().strftime('%Y-%m-%d %H:%M'))
+
+if len(sys.argv) >= 2:
+	base_dir = sys.argv[1]
+elif conf.Global.blog_directory:
+	base_dir = conf.Global.blog_directory
+else:
+	base_dir = './'
+
+print base_dir
+
+os.system('cd %s'%base_dir)
+# Get the lastest version of the sources from the git repository
+# Pull the last modifications in the git repository
+os.system('git pull --commit --no-edit')
 
 # The content is written in the source file
 # The resulting source will be :
 #	- HEADER
 #	- New content
 #	- Previous content
-with open(LINKS_OUT_FILE+"_tmp",'w') as f:
+with open(conf.Links.out_file+"_tmp",'w') as f:
 	f.write(header+"\n")
 	f.write(CONTENT.encode("utf-8")+"\n")
 	# Read the old content
-	with open(LINKS_OUT_FILE, "r") as fIn:
+	with open(conf.Links.out_file, "r") as fIn:
 		# Pass the old header
 		for c in xrange(header.count('\n')+1):
 			fIn.readline()
@@ -135,8 +149,19 @@ with open(LINKS_OUT_FILE+"_tmp",'w') as f:
 
 # Remove the old page source file, and move the temporary source file
 # to the real page source file.
-os.remove(LINKS_OUT_FILE)
-os.rename(LINKS_OUT_FILE+"_tmp", LINKS_OUT_FILE)
+os.remove(conf.Links.out_file)
+os.rename(conf.Links.out_file+"_tmp", conf.Links.out_file)
+
+# Pull the last modifications in the git repository
+os.system('git pull --commit --no-edit')
+# Add the modifications and commit them
+fname = conf.Links.out_file.replace(base_dir, '')
+os.system('git add %s'%fname)
+os.system('git commit -m "Add new Twitter links"')
+# Push our updates
+os.system('git push')
+# Generate and upload the blog
+os.system('make ssh_upload')
 
 # Write the new last ID in the log file
 if len(tweets):
@@ -144,8 +169,16 @@ if len(tweets):
 	with open(LAST_ID_FILE, "w") as f:
 		f.write(str(LAST_ID))
 
-# Exit with a custom error code
+# If new links were added, commit the modifications and exit with
+# a custom error code
 if len(urls) > 0:
+	# Commit and push the new updates into the git repository
+	os.system('git add %s'%conf.Links.out_file)
+	os.system('git commit -m "Add %d new Twitter links"'%len(urls))
+	os.system('git push')
+	# Generate and upload the blog
+	os.system('make ssh_upload')
+	# Exit
 	sys.exit(0)
 else:
 	sys.exit(1)
