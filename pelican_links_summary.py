@@ -114,6 +114,16 @@ for tweet in tweets:
 # The 'now' timestamp is used to keep a trace of the latest modification
 header = conf.Links.page_header%(datetime.datetime.now().strftime('%Y-%m-%d %H:%M'))
 
+if len(sys.argv) >= 2:
+	base_dir = sys.argv[1]
+elif conf.Global.blog_directory:
+	base_dir = conf.Global.blog_directory
+else:
+	base_dir = './'
+
+print base_dir
+
+os.system('cd %s'%base_dir)
 # Get the lastest version of the sources from the git repository
 # Pull the last modifications in the git repository
 os.system('git pull --commit --no-edit')
@@ -141,6 +151,17 @@ with open(conf.Links.out_file+"_tmp",'w') as f:
 # to the real page source file.
 os.remove(conf.Links.out_file)
 os.rename(conf.Links.out_file+"_tmp", conf.Links.out_file)
+
+# Pull the last modifications in the git repository
+os.system('git pull --commit --no-edit')
+# Add the modifications and commit them
+fname = conf.Links.out_file.replace(base_dir, '')
+os.system('git add %s'%fname)
+os.system('git commit -m "Add new Twitter links"')
+# Push our updates
+os.system('git push')
+# Generate and upload the blog
+os.system('make ssh_upload')
 
 # Write the new last ID in the log file
 if len(tweets):
