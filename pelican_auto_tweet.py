@@ -117,7 +117,12 @@ else:
 # writen and needs to be published. 
 if log_message.startswith('[POST]'):
 
-	f = [os.path.basename(x) for x in files]
+	f = []
+	for x in files:
+		name = os.path.basename(x)
+		b,ext = os.path.splitext(name)
+		if ext in ('.md', '.rst'):
+			f.append(name)
 	# Check that there is no drafts in the commited articles. 
 	if BLOG.posts_have_drafts(f):
 		print "You are about to publish drafts."
