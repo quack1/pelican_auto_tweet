@@ -101,7 +101,7 @@ for tweet in tweets:
 				final_text += u"[%s](%s) "%(url,url)
 			elif item.startswith('@') and item[1:] in users:
 				s = "[%s](https://twitter.com/%s"%(item, item[1:])
-				final_text += u"%s "s
+				final_text += u"%s "%s
 			else:
 				# The item is just a "word", and it's added too to the
 				# line
