@@ -8,7 +8,7 @@ Both Markdown and Rest syntax are supported. The 'Slug' tag **has** to be set
 '''
 
 __author__     = 'quack1'
-__version__    = '0.8'
+__version__    = '0.9'
 __date__       = '2014-05-27'
 __copyright__  = 'Copyright © 2013-2014, Quack1'
 __licence__    = 'BSD'
