@@ -1,0 +1,8 @@
+CHANGELOG
+=========
+
+v0.9
+----
+
+- Add a Pelican_get_posts script to display all the posts, orderd by asc. date
+
