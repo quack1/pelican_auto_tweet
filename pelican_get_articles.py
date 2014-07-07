@@ -1,13 +1,13 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*- 
 
-'''This script prints the drafts present on a Pelican blog.
+'''This script prints the articles present on a Pelican blog ordered by post date asc.
 If no argument is passed, the current directory ('.') is used.
 '''
 
 __author__     = 'quack1'
 __version__    = '0.9'
-__date__       = '2014-05-21'
+__date__       = '2014-07-07'
 __copyright__  = 'Copyright © 2013-2014, Quack1'
 __licence__    = 'BSD'
 __credits__    = ['Quack1']
@@ -32,8 +32,9 @@ else:
 BLOG = libpelican.PelicanBlog(base_dir)
 
 # Get the drafts from the blog instance and print them.
-drafts = BLOG.get_drafts()
-for article in drafts:
+posts = BLOG.get_posts()
+posts = sorted(posts, key=lambda x: BLOG.get_post_date(x))
+for article in posts:
 	print "File '%s' ([%s] %s)"%(article, BLOG.get_post_date(article), BLOG.get_post_title(article))
 
 # END
