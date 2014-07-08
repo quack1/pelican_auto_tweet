@@ -131,7 +131,7 @@ else:
 
 print base_dir
 
-os.system('cd %s'%base_dir)
+os.chdir(base_dir)
 # Get the lastest version of the sources from the git repository
 # Pull the last modifications in the git repository
 os.system('git pull --commit --no-edit')
@@ -160,8 +160,6 @@ with open(conf.Links.out_file+"_tmp",'w') as f:
 os.remove(conf.Links.out_file)
 os.rename(conf.Links.out_file+"_tmp", conf.Links.out_file)
 
-# Pull the last modifications in the git repository
-os.system('git pull --commit --no-edit')
 # Add the modifications and commit them
 fname = conf.Links.out_file.replace(base_dir, '')
 os.system('git add %s'%fname)
