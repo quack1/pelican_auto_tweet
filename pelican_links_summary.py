@@ -100,16 +100,16 @@ for tweet in tweets:
 				urls.append(url)
 				final_text += u"[%s](%s) "%(url,url)
 			elif item.startswith('@') and item[1:] in users:
-				s = "[%s](https://twitter.com/%s"%(item, item[1:])
+				s = "[%s](https://twitter.com/%s)"%(item, item[1:])
 				final_text += u"%s "s
 			else:
 				# The item is just a "word", and it's added too to the
 				# line
 				final_text += u"%s "%item
-		# Replace every mention by a link to the user profile
-		for user in users:
-			s = "[@%s](https://twitter.com/%s)"%(user, user)
-			final_text = final_text.replace('@%s'%user, s)
+		## Replace every mention by a link to the user profile
+		#for user in users:
+		#	s = "[@%s](https://twitter.com/%s)"%(user, user)
+		#	final_text = final_text.replace('@%s'%user, s)
 		# Replace the commentary mark by its HTML equivalent.
 		if final_text.startswith("#"):
 			final_text = "&#35;" + final_text[1:]
