@@ -8,8 +8,8 @@ Both Markdown and Rest syntax are supported. The 'Slug' tag **has** to be set
 '''
 
 __author__     = 'quack1'
-__version__    = '0.9'
-__date__       = '2014-05-27'
+__version__    = '0.9.1'
+__date__       = '2015-01-15'
 __copyright__  = 'Copyright © 2013-2014, Quack1'
 __licence__    = 'BSD'
 __credits__    = ['Quack1']
@@ -48,6 +48,7 @@ class MLStripper(HTMLParser):
         self.fed.append(d)
     def get_data(self):
         return ''.join(self.fed)
+
 def strip_tags(html):
     s = MLStripper()
     s.feed(html)
@@ -68,6 +69,14 @@ def twitter_send(text):
 	TWITTER_API.PostUpdate(text)
 	print(text)
 
+def publish_blog():
+	# Pull the last modifications in the git repository
+	os.system('git pull --commit --no-edit')
+	# Push our updates
+	os.system('git push')
+	# Generate and upload the blog
+	os.system('make ssh_upload')
+
 
 # Check arguments
 # If one argument is passed, it will be considered as the base blog directory.
@@ -79,7 +88,7 @@ elif conf.Global.blog_directory:
 else:
 	base_dir = './'
 
-print base_dir
+# print base_dir
 
 # A new blog instance is created on this directory.
 BLOG = libpelican.PelicanBlog(base_dir)
@@ -97,9 +106,10 @@ try:
 except:
 	BITLY_API = None
 
+# print "Getting git status"
 # Move to the blog base directory, and get the last commit message and the last
 # commited files. 
-os.chdir(BLOG.get_base_directory())
+os.chdir(BLOG.get_content_directory())
 result = commands.getoutput('git show --pretty="format:%s" --name-only')
 
 # The first line is the commit message. The following lines contain the filenames.
@@ -113,10 +123,14 @@ if not conf.Auto.tweet_format:
 else:
 	TWEET_FORMAT_AUTO = conf.Auto.tweet_format
 
-# If the log message starts by '[POST]', it means that (at least) one new post was 
-# writen and needs to be published. 
-if log_message.startswith('[POST]'):
+# Tweets can be triggered on a per file basis by putting 'Trigger: tweet' in the metadata
+if not conf.Global.tweet_trigger:
+	TWEET_TRIGGER = 'tweet'
+else:
+	TWEET_TRIGGER = conf.Global.tweet_trigger
 
+# Only publish if the config says so
+if conf.Global.always_publish == True:
 	f = []
 	for x in files:
 		name = os.path.basename(x)
@@ -136,34 +150,44 @@ if log_message.startswith('[POST]'):
 		if response.upper() == "N":
 			sys.exit(2)
 
-	# Pull the last modifications in the git repository
-	os.system('git pull --commit --no-edit')
-	# Push our updates
-	os.system('git push')
-	# Generate and upload the blog
-	os.system('make ssh_upload')
+	publish_blog(BLOG, files)
 
-	# A new tweet is sent for each commited article.
-	for filename in files:
+# A new tweet is sent for each committed article.
+for filename in files:
+	# Make sure the file has not been deleted (git rm)
+	if os.path.isfile(filename):
 		post_filename = os.path.basename(filename)
+		post_filename = filename
 		base, ext     = os.path.splitext(filename)
 		# An article is a '.rst' or '.md' file in the 'content/' directory.
-		if base.startswith('content/') and ext in ('.rst','.md'):
-			title = BLOG.get_post_title(post_filename)
-			url   = BLOG.get_post_url(post_filename)
+		#if base.startswith('content/') and ext in ('.rst','.md'):
+		if ext in ('.rst','.md'):
+			triggers = BLOG.get_post_triggers(post_filename)
+			if TWEET_TRIGGER in triggers:
+				title = BLOG.get_post_title(post_filename)
+				url   = BLOG.get_post_url(post_filename)
 
-			# Shorten the link if Bitly is used.
-			if BITLY_API:
-				s = BITLY_API.shorten(url)
-				u = s['url']
-				url = unicodedata.normalize('NFKD', u).encode('ascii','ignore')
+				# Shorten the link if Bitly is used.
+				if BITLY_API:
+					try:
+						s = BITLY_API.shorten(url)
+						u = s['url']
+						url = unicodedata.normalize('NFKD', u).encode('ascii','ignore')
+					except Exception as err:
+						print "Failed to shorten URL - Attempting long version:", err
 
-			# Generate tweet message from TWEET_FORMAT_AUTO
-			tweet_text = TWEET_FORMAT_AUTO.replace('$$POST_TITLE$$', title)
-			tweet_text = tweet_text.replace('$$POST_URL$$', url)
-			tweet_text = strip_tags(tweet_text)
+				# Generate tweet message from TWEET_FORMAT_AUTO
+				tweet_text = TWEET_FORMAT_AUTO.replace('$$POST_TITLE$$', title)
+				tweet_text = tweet_text.replace('$$POST_URL$$', url)
+				tweet_text = strip_tags(tweet_text)
 
-			# Post tweet
-			twitter_send(tweet_text)
+				print "Tweet:", tweet_text
+
+				# Post tweet
+				try:
+					twitter_send(tweet_text)
+				except twitter.TwitterError as err:
+					print "FAIL:", err
+
 
 #END
