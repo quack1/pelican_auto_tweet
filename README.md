@@ -9,7 +9,7 @@ For now, I only wrote two scripts:
 - `pelican_auto_tweet.py`
 - `pelican_tweet_summary.py`
 
-The first one is usefull to automatically post a tweet on Twitter for the latest blog post. As Pelican is text-based and often used with Git, this script makes use of Git logs to find new posts. More details are given below.
+The first one is useful to automatically post a tweet on Twitter for the latest blog post. As Pelican is text-based and often used with Git, this script makes use of Git logs to find new posts. More details are given below.
 
 The second script posts a tweet on Twitter for each article posted on the blog in the last 7 days. Like the previous script, I give some details below.
 
@@ -29,6 +29,12 @@ cd python-twitter
 hg update
 python setup.py build
 python setup.py install
+```
+
+Alternatively, you can now use:
+
+```bash
+pip install python-twitter
 ```
 
 ### Bitly 
@@ -81,6 +87,18 @@ You can also define in a variable the base directory of you Pelican blog. This o
 BASE_DIR = '~/pelican_blog/'
 ```
 
+You can define whether the script will publish your blog by setting:
+
+```Python
+always_publish = True
+```
+
+You can define the tweet trigger word to be used in the metadata (Triggers:)
+
+```Python
+tweet_trigger = 'tweet'
+```
+
 Now, you can use the scripts.
 
 ### Pelican_auto_tweet
@@ -91,10 +109,10 @@ I use this script to tweet the link of my **last** blog post.
 
 This script do 4 things :
 
-1. It checks if a new article was writen (by looking if the [Git [FR]](http://blog.quack1.me/tag/git.html "Blog Quack1 - Tag « Git »") _commit_ log starts with `[POST]`).
+1. It checks if a new article was written by checking the git repo.
 2. In this case, it pushes the new _commits_ on the [default git repository [FR]](http://blog.quack1.me/git_push_multiple_remote.md "Git : Pusher ses modifications sur plusieurs dépôts en une seule commande").
-3. It updates the blog on the serveur through SSH (command `make ssh_upload` for the _Pelican-ists_).
-4. It posts a tweet.
+3. It updates the blog on the server through SSH (command `make ssh_upload` for the _Pelican-ists_).
+4. It post metadata contains Triggers: tweet - it will post a tweet.
 
 #### Long explanation
 
