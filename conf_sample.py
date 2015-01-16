@@ -20,6 +20,7 @@ import os.path
 class Global:
 	blog_directory = '<Pelican_Blog_Home_Directory>'
 	always_publish = True
+	use_trigger    = False
 	tweet_trigger = 'tweet'
 
 
