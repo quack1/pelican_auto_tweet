@@ -71,15 +71,17 @@ def twitter_send(text):
 	print(text)
 
 def publish_blog():
+	os.chdir(BLOG.get_base_directory())
 	# Pull the last modifications in the git repository
 	os.system('git pull --commit --no-edit')
 	# Push our updates
 	os.system('git push')
 	# Generate and upload the blog
 	if not use_custom_git_command:
-    		os.system('make ssh_upload')
-	else:
 		os.system('make ssh_upload')
+	else:
+		os.system('make ssh_git_upload')
+		os.chdir(BLOG.get_content_directory())
 
 
 # Check arguments
@@ -154,8 +156,9 @@ if (conf.Global.always_publish == True) or (conf.Global.always_publish == False 
 		if response.upper() == "N":
 			sys.exit(2)
 
-	publish_blog(BLOG, files)
+	publish_blog()
 
+files = f
 # A new tweet is sent for each committed article.
 for filename in files:
 	# Make sure the file has not been deleted (git rm)
@@ -166,9 +169,10 @@ for filename in files:
 		base, ext     = os.path.splitext(filename)
 		# An article is a '.rst' or '.md' file in the 'content/' directory.
 		#if base.startswith('content/') and ext in ('.rst','.md'):
+		print post_filename
 		if ext in ('.rst','.md'):
 			triggers = BLOG.get_post_triggers(post_filename)
-			if TWEET_TRIGGER in triggers:
+			if (conf.Global.use_trigger and TWEET_TRIGGER in triggers) or (not conf.Global.use_trigger):
 				title = BLOG.get_post_title(post_filename)
 				url   = BLOG.get_post_url(post_filename)
 

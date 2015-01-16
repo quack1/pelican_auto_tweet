@@ -340,16 +340,16 @@ class PelicanBlog:
 		Returns:
 		  The substituted path.
 		'''
-	    regex = re.compile(r'\{date\:([^\}]+)\}')
-	    match = regex.search(path)
-	    while (match):
-	        dpat = match.group(1)
-	        res = date.strftime(dpat)    
-	        (s,e) = match.span()
-	        path = path[:s] + res + path[e:]
-	        match = regex.search(path)
-	    
-	    return path
+		regex = re.compile(r'\{date\:([^\}]+)\}')
+		match = regex.search(path)
+		while (match):
+			dpat = match.group(1)
+			res = date.strftime(dpat)    
+			(s,e) = match.span()
+			path = path[:s] + res + path[e:]
+			match = regex.search(path)
+			
+		return path
 
 	def _translate_url_mask(self, post_filename):
 		mask = self.get_site_post_url_mask()
