@@ -37,6 +37,7 @@ TWITTER_API = None
 BITLY_API   = None
 BLOG        = None
 
+use_custom_git_command = True
 #
 # From http://stackoverflow.com/questions/753052/strip-html-from-strings-in-python
 #
@@ -141,7 +142,10 @@ if log_message.startswith('[POST]'):
 	# Push our updates
 	os.system('git push')
 	# Generate and upload the blog
-	os.system('make ssh_upload')
+    if not use_custom_git_command:
+    	os.system('make ssh_upload')
+	else:
+        os.system('make ssh_git_upload')
 
 	# A new tweet is sent for each commited article.
 	for filename in files:
