@@ -14,3 +14,5 @@
 
 - Rename the project : 'pelican_auto_tweet' -> 'pelican-twitter' or 'pelican-triggers' or 'pelican-social'
 - Add custom git/publish command on the conf file
+- Add a special class for images in blogpost (example : twitter-pic) and add these images to the tweets sent by pelican_auto_tweet and pelican_tweet_summary below the link and title.
+

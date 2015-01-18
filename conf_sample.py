@@ -19,6 +19,9 @@ import os.path
 
 class Global:
 	blog_directory = '<Pelican_Blog_Home_Directory>'
+	always_publish = True
+	use_trigger    = False
+	tweet_trigger = 'tweet'
 
 
 class Auto:
@@ -48,7 +51,7 @@ class Links:
 class Twitter:
 	consumer_key        = ''
 	consumer_secret     = ''
-	access_token        = ''
+	access_token_key    = ''
 	access_token_secret = ''
 
 

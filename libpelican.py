@@ -6,8 +6,8 @@ blog posts.
 '''
 
 __author__     = 'quack1'
-__version__    = '0.9'
-__date__       = '2014-05-27'
+__version__    = '0.9.1'
+__date__       = '2015-01-15'
 __copyright__  = 'Copyright © 2013-2014, Quack1'
 __licence__    = 'BSD'
 __credits__    = ['Quack1']
@@ -47,11 +47,18 @@ class PelicanBlog:
 	'''
 
 
-	_blog_directory    = None
-	_content_directory = None
-	_blog_base_url     = None
+	_blog_directory    	= None
+	_content_directory	= None
+	_blog_base_url     	= None
+	_blog_post_url_mask = None
+
+	_default_blog_post_url_mask = '{slug}.html'
 
 	_REGEX_BASE_URL = re.compile(r'SITEURL = \'(.*)\'',re.IGNORECASE)
+	_REGEX_ARTICLE_URL = re.compile(r'ARTICLE_URL = \'(.*)\'',re.IGNORECASE)
+
+	# publishconf.py takes precedence over pelicanconf.py
+	_pelican_conf_files = ['publishconf.py', 'pelicanconf.py']
 
 	def __init__(self, base_directory):
 		'''Initiate a new Pelican blog instance.
@@ -65,24 +72,47 @@ class PelicanBlog:
 		self._blog_directory = base_directory
 		self._content_directory = os.path.join(self._blog_directory, 'content')
 
-	def get_site_base_url(self):
-		'''Get the blog base URL from the `pelicanconf.py` file.
-		The file must be located in the base directory given in the parameter 
-		of the constructor.
-
-		The file which will be read will be {base_directory}/pelicanconf.py.
+	def _get_pelican_config_value(self, c):
 		'''
-		if self._blog_base_url:
-			return self._blog_base_url
-		else:
-			with open(os.path.join(self._blog_directory,"pelicanconf.py")) as f:
-				for l in f:
-					res = self._REGEX_BASE_URL.search(l)
-					if res:
-						self._blog_base_url = res.group(1)
-						if not self._blog_base_url.endswith('/'):
-							self._blog_base_url += '/'
-						return self._blog_base_url
+		Get a config value from the Pelican config files
+
+		Args:
+		  c:
+		  	The config value to search for (compiled regex)
+		'''
+		val = None
+		for conf in self._pelican_conf_files:
+			if val is None:
+				with open(os.path.join(self._blog_directory, conf)) as f:
+					for l in f:
+						res = c.search(l)
+						if res:
+							val = res.group(1)
+							break
+		return val
+
+	def get_site_base_url(self):
+		'''
+		Get the blog base URL from the pelican config files - Attribute SITEURL.
+		'''
+		if self._blog_base_url is None:
+			self._blog_base_url = self._get_pelican_config_value(self._REGEX_BASE_URL)
+			if self._blog_base_url:
+				if not self._blog_base_url.endswith('/'):
+					self._blog_base_url += '/'
+
+		return self._blog_base_url
+
+	def get_site_post_url_mask(self):
+		'''
+		Get the site URL mask from the pelican config files - Attribute ARTICLE_URL.
+		'''
+		if self._blog_post_url_mask is None:
+			self._blog_post_url_mask = self._get_pelican_config_value(self._REGEX_ARTICLE_URL)
+			if self._blog_post_url_mask is None:
+				self._blog_post_url_mask = self._default_blog_post_url_mask
+
+		return self._blog_post_url_mask
 
 
 	def _get_post_info(self, post_filename, post_info):
@@ -119,6 +149,14 @@ class PelicanBlog:
 		  The base directory containing a blog instance
 		'''
 		return self._blog_directory
+
+	def get_content_directory(self):
+		'''Get the content directory of a blog instance.
+
+		Returns:
+		  The content directory containing a blog instance
+		'''
+		return self._content_directory
 
 	def get_post_title(self, post_filename):
 		'''Get the title of a blog post.
@@ -183,6 +221,22 @@ class PelicanBlog:
 		  list.
 		'''
 		tags = self._get_post_info(post_filename, "Tags").split(',')
+		return [x.strip() for x in tags]
+
+	def get_post_triggers(self, post_filename):
+		'''Get the triggers of a blog post.
+		Args:
+		  post_filename:
+		    The filename of the article.
+
+		Returns:
+		  A list containing all the tags of the article. If no triggers are defined, the
+		    list can contain only an empty string.
+
+		TODO: If the string returned by get_post_info is blank, return an empty
+		  list.
+		'''
+		tags = self._get_post_info(post_filename, "Triggers").split(',')
 		return [x.strip() for x in tags]
 
 	def get_post_slug(self, post_filename):
@@ -272,7 +326,42 @@ class PelicanBlog:
 		Returns:
 		  The complete URL to the article.
 		'''
-		return self.get_site_base_url() + self.get_post_slug(post_filename) + ".html"
+		return self.get_site_base_url() + self._translate_url_mask(post_filename)
+
+	def _substitute_date_tags(self, path, date):
+		'''Substitute {date:%dateformat} tags in a string
+
+		Args:
+		  path:
+		    The path containing the tags.
+		  date:
+		    The date value to use for substitution
+
+		Returns:
+		  The substituted path.
+		'''
+		regex = re.compile(r'\{date\:([^\}]+)\}')
+		match = regex.search(path)
+		while (match):
+			dpat = match.group(1)
+			res = date.strftime(dpat)    
+			(s,e) = match.span()
+			path = path[:s] + res + path[e:]
+			match = regex.search(path)
+			
+		return path
+
+	def _translate_url_mask(self, post_filename):
+		mask = self.get_site_post_url_mask()
+		post_date = self.get_post_date(post_filename)
+		url = mask.replace('{slug}', self.get_post_slug(post_filename))
+		url = url.replace('{lang}', self.get_post_lang(post_filename))
+		url = url.replace('{author}', self.get_post_author(post_filename))
+		url = url.replace('{category}', self.get_post_category(post_filename))
+		url = self._substitute_date_tags(url, post_date)
+
+		return url
+
 
 	def get_posts(self):
 		'''Get the list of all articles of the blog.
